@@ -16,31 +16,29 @@ Alpine.start();
 // エアコンの電源をOFFにする関数
 (window as any).togglePowerOff = function () {
   const store = Alpine.store("airconState") as any;
-  if (store.power !== "off") {
-    Alpine.store("airconState", { ...store, power: "off" });
-    postAirconStateDebounced();
-  }
+  Alpine.store("airconState", { ...store, power: "off" });
+  postAirconState();
 };
 
 // 冷房ボタンで電源ON+モードcoolにする関数
 (window as any).setCoolMode = function () {
   const store = Alpine.store("airconState") as any;
   Alpine.store("airconState", { ...store, power: "on", mode: "cool" });
-  postAirconStateDebounced();
+  postAirconState();
 };
 
 // 除湿ボタンで電源ON+モードdryにする関数
 (window as any).setDryMode = function () {
   const store = Alpine.store("airconState") as any;
   Alpine.store("airconState", { ...store, power: "on", mode: "dry" });
-  postAirconStateDebounced();
+  postAirconState();
 };
 
 // 暖房ボタンで電源ON+モードheatにする関数
 (window as any).setHeatMode = function () {
   const store = Alpine.store("airconState") as any;
   Alpine.store("airconState", { ...store, power: "on", mode: "heat" });
-  postAirconStateDebounced();
+  postAirconState();
 };
 
 // 温度を1上げる関数
