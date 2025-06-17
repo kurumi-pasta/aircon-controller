@@ -253,6 +253,23 @@ def send_pulses(pi: pigpio.pi, gpio_pin: int, pulses: list[int]):
         pi.wave_delete(wid)
 
 
+class PanasonicAirconController:
+    """
+    エアコンの状態を管理し、赤外線信号を送信するクラス
+    """
+
+    def __init__(self, pi: pigpio.pi, gpio_pin: int):
+        self.pi = pi
+        self.gpio_pin = gpio_pin
+        self.pulse_converter = PanasonicPulseConverter()
+
+    def send_state(self, state: AirconState):
+        encoded_bits = encode_aircon_state(state)
+        aircon_frame = AirconIrFrameData(data2=encoded_bits)
+        pulses = self.pulse_converter.frame_to_pulses(aircon_frame)
+        send_pulses(self.pi, self.gpio_pin, pulses)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
