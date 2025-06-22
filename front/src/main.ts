@@ -3,66 +3,108 @@ import Alpine from "alpinejs";
 
 (window as any).Alpine = Alpine;
 
-Alpine.store("airconState", {
-  power: "off",
-  mode: "cool",
-  temp: 25,
-  fan: "auto",
-  direction: "auto",
-});
+type AirconState = {
+  power: string;
+  mode: string;
+  temp: number;
+  fan: string;
+  direction: string;
+};
 
+export type AirconStore = AirconState & {
+  update: (newState: AirconState) => void;
+  powerOff: () => void;
+  enableCoolMode: () => void;
+  enableDryMode: () => void;
+  enableHeatMode: () => void;
+  decrementTemp: () => boolean;
+  incrementTemp: () => boolean;
+};
+
+function createAirconStore(): AirconStore {
+  return {
+    power: "off",
+    mode: "cool",
+    temp: 25,
+    fan: "auto",
+    direction: "auto",
+
+    update(newState) {
+      this.power = newState.power;
+      this.mode = newState.mode;
+      this.temp = newState.temp;
+      this.fan = newState.fan;
+      this.direction = newState.direction;
+    },
+
+    powerOff() {
+      this.power = "off";
+    },
+
+    enableCoolMode() {
+      this.power = "on";
+      this.mode = "cool";
+    },
+    enableDryMode() {
+      this.power = "on";
+      this.mode = "dry";
+    },
+    enableHeatMode() {
+      this.power = "on";
+      this.mode = "heat";
+    },
+
+    decrementTemp() {
+      if (this.power === "on" && this.temp > 16) {
+        this.temp -= 1;
+        return true;
+      } else {
+        return false;
+      }
+    },
+    incrementTemp() {
+      if (this.power === "on" && this.temp < 30) {
+        this.temp += 1;
+        return true;
+      } else {
+        return false;
+      }
+    },
+  };
+}
+
+Alpine.store("aircon", createAirconStore());
 Alpine.start();
 
-// エアコンの電源をOFFにする関数
-(window as any).togglePowerOff = function () {
-  const store = Alpine.store("airconState") as any;
-  Alpine.store("airconState", { ...store, power: "off" });
+// クリックハンドラ
+(window as any).handlePowerOff = function () {
+  Alpine.store("aircon").powerOff();
   postAirconState();
 };
 
-// 冷房ボタンで電源ON+モードcoolにする関数
-(window as any).setCoolMode = function () {
-  const store = Alpine.store("airconState") as any;
-  Alpine.store("airconState", { ...store, power: "on", mode: "cool" });
+(window as any).handleEnableCoolMode = function () {
+  Alpine.store("aircon").enableCoolMode();
   postAirconState();
 };
 
-// 除湿ボタンで電源ON+モードdryにする関数
-(window as any).setDryMode = function () {
-  const store = Alpine.store("airconState") as any;
-  Alpine.store("airconState", { ...store, power: "on", mode: "dry" });
+(window as any).handleEnableDryMode = function () {
+  Alpine.store("aircon").enableDryMode();
   postAirconState();
 };
 
-// 暖房ボタンで電源ON+モードheatにする関数
-(window as any).setHeatMode = function () {
-  const store = Alpine.store("airconState") as any;
-  Alpine.store("airconState", { ...store, power: "on", mode: "heat" });
+(window as any).handleEnableHeatMode = function () {
+  Alpine.store("aircon").enableHeatMode();
   postAirconState();
 };
 
-// 温度を1上げる関数
-(window as any).incrementTemp = function () {
-  const store = Alpine.store("airconState") as any;
-  if (
-    store.power === "on" &&
-    typeof store.temp === "number" &&
-    store.temp < 30
-  ) {
-    Alpine.store("airconState", { ...store, temp: store.temp + 1 });
+(window as any).handleIncrementTemp = function () {
+  if (Alpine.store("aircon").incrementTemp()) {
     postAirconStateDebounced();
   }
 };
 
-// 温度を1下げる関数
-(window as any).decrementTemp = function () {
-  const store = Alpine.store("airconState") as any;
-  if (
-    store.power === "on" &&
-    typeof store.temp === "number" &&
-    store.temp > 16
-  ) {
-    Alpine.store("airconState", { ...store, temp: store.temp - 1 });
+(window as any).handleDecrementTemp = function () {
+  if (Alpine.store("aircon").decrementTemp()) {
     postAirconStateDebounced();
   }
 };
@@ -71,29 +113,30 @@ Alpine.start();
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 function postAirconStateDebounced() {
   if (debounceTimer) clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(postAirconState, 500);
+  debounceTimer = setTimeout(postAirconState, 400);
 }
 
 // エアコン状態をAPIにPOSTする関数
 async function postAirconState() {
   try {
-    const state = Alpine.store("airconState");
+    const store = Alpine.store("aircon");
     await fetch("/api/aircon/state", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(state),
+      body: JSON.stringify(store),
     });
   } catch (e) {
     console.error("エアコン状態のAPI送信失敗", e);
   }
 }
 
+// 初期状態をAPIから取得
 (async function () {
   try {
     const res = await fetch("/api/aircon/state");
     if (!res.ok) throw new Error("Failed to fetch aircon state");
     const state = await res.json();
-    Alpine.store("airconState", state);
+    Alpine.store("aircon").update(state);
   } catch (e) {
     console.error("エアコン状態取得失敗", e);
   }

@@ -21,23 +21,23 @@
               class="text-gray-700 grid grid-cols-3 h-6 col-span-3 text-center border-b border-gray-300"
             >
               <span
-                x-text="$store.airconState.power === 'on' && $store.airconState.mode === 'cool' ? '冷房' : ''"
+                x-text="$store.aircon.power === 'on' && $store.aircon.mode === 'cool' ? '冷房' : ''"
               ></span>
               <span
-                x-text="$store.airconState.power === 'on' && $store.airconState.mode === 'dry' ? '除湿' :  ''"
+                x-text="$store.aircon.power === 'on' && $store.aircon.mode === 'dry' ? '除湿' :  ''"
               ></span>
               <span
-                x-text="$store.airconState.power === 'on' && $store.airconState.mode === 'heat' ? '暖房' : ''"
+                x-text="$store.aircon.power === 'on' && $store.aircon.mode === 'heat' ? '暖房' : ''"
               ></span>
             </div>
             <div class="h-16 flex justify-center items-end">
               <span
                 class="text-6xl font-bold text-gray-800 leading-none"
-                x-text="$store.airconState.power === 'on' ? $store.airconState.temp : ''"
+                x-text="$store.aircon.power === 'on' ? $store.aircon.temp : ''"
               ></span>
               <span
                 class="text-sm text-gray-700 self-end"
-                x-text="$store.airconState.power === 'on' ? '℃' : ''"
+                x-text="$store.aircon.power === 'on' ? '℃' : ''"
               ></span>
             </div>
             <div
@@ -46,7 +46,7 @@
               <span class="border-r border-gray-300"></span>
               <div
                 class="border-r border-gray-300"
-                x-text="$store.airconState.power === 'on' ? ($store.airconState.fan === 'auto' ? '自動' : $store.airconState.fan) : ''"
+                x-text="$store.aircon.power === 'on' ? ($store.aircon.fan === 'auto' ? '自動' : $store.aircon.fan) : ''"
               ></div>
               <span></span>
             </div>
@@ -78,19 +78,19 @@
         <div class="grid grid-cols-3 gap-2 w-[200px]">
           <button
             class="bg-blue-100 text-gray-800 rounded py-1 h-10 font-bold"
-            onclick="setCoolMode()"
+            onclick="handleEnableCoolMode()"
           >
             冷房
           </button>
           <button
             class="bg-yellow-100 text-gray-800 rounded py-1 h-10 font-bold"
-            onclick="setDryMode()"
+            onclick="handleEnableDryMode()"
           >
             除湿
           </button>
           <button
             class="bg-orange-100 text-gray-800 rounded py-1 h-10 font-bold"
-            onclick="setHeatMode()"
+            onclick="handleEnableHeatMode()"
           >
             暖房
           </button>
@@ -107,7 +107,7 @@
           <div class="flex flex-col items-center gap-1 justify-between">
             <button
               class="bg-gray-100 text-gray-800 rounded w-full h-7 flex items-center justify-center mb-1"
-              onclick="incrementTemp()"
+              onclick="handleIncrementTemp()"
             >
               <span class="text-lg font-bold">▲</span>
             </button>
@@ -116,7 +116,7 @@
             </button>
             <button
               class="bg-gray-100 text-gray-800 rounded w-full h-7 flex items-center justify-center mt-1"
-              onclick="decrementTemp()"
+              onclick="handleDecrementTemp()"
             >
               <span class="text-lg font-bold">▼</span>
             </button>
@@ -132,7 +132,7 @@
           <div></div>
           <button
             class="bg-gray-100 text-gray-800 rounded py-1 font-bold col-span-1 ring-2 ring-red-400 ring-inset"
-            onclick="togglePowerOff()"
+            onclick="handlePowerOff()"
           >
             停止
           </button>
