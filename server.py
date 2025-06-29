@@ -10,14 +10,14 @@ from aircon_ir_sender import (
     AirconState,
     AirconMode,
     AirconFan,
-    AirconDirection,
+    AirconSwing,
 )
 
 
 def validate_aircon_state(data: dict[str, Any]) -> tuple[bool, str]:
     """
     AirconState用のバリデーション関数。
-    必須キー: power(bool), mode(str), temp(int), fan(str), direction(str)
+    必須キー: power(bool), mode(str), temp(int), fan(str), swing(str)
     値が不正な場合はFalse, エラーメッセージを返す。
     """
     # power
@@ -51,14 +51,14 @@ def validate_aircon_state(data: dict[str, Any]) -> tuple[bool, str]:
     ):
         return False, f"'fan' must be one of {sorted(valid_fans)}."
 
-    # direction
-    valid_dirs = {d.name.lower() for d in AirconDirection}
+    # swing
+    valid_swings = {d.name.lower() for d in AirconSwing}
     if (
-        "direction" not in data
-        or not isinstance(data["direction"], str)
-        or data["direction"].lower() not in valid_dirs
+        "swing" not in data
+        or not isinstance(data["swing"], str)
+        or data["swing"].lower() not in valid_swings
     ):
-        return False, f"'direction' must be one of {sorted(valid_dirs)}."
+        return False, f"'swing' must be one of {sorted(valid_swings)}."
 
     return True, ""
 
@@ -80,7 +80,7 @@ class AirconStateRepository:
                 mode=AirconMode[data["mode"].upper()],
                 temp=int(data["temp"]),
                 fan=AirconFan[data["fan"].upper()],
-                direction=AirconDirection[data["direction"].upper()],
+                swing=AirconSwing[data["swing"].upper()],
             )
         except Exception as e:
             # デフォルト値を返す
@@ -94,7 +94,7 @@ class AirconStateRepository:
                 "mode": state.mode.name.lower(),
                 "temp": state.temp,
                 "fan": state.fan.name.lower(),
-                "direction": state.direction.name.lower(),
+                "swing": state.swing.name.lower(),
             }
             with open(self.filepath, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
@@ -156,7 +156,7 @@ def main():
                     mode=AirconMode[data["mode"].upper()],
                     temp=int(data["temp"]),
                     fan=AirconFan[data["fan"].upper()],
-                    direction=AirconDirection[data["direction"].upper()],
+                    swing=AirconSwing[data["swing"].upper()],
                 )
 
                 try:
@@ -185,7 +185,7 @@ def main():
                     "mode": state.mode.name.lower(),
                     "temp": state.temp,
                     "fan": state.fan.name.lower(),
-                    "direction": state.direction.name.lower(),
+                    "swing": state.swing.name.lower(),
                 }
                 self.send_response(200)
                 self.send_header("Content-type", "application/json")

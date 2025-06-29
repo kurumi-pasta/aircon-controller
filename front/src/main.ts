@@ -3,12 +3,45 @@ import Alpine from "alpinejs";
 
 (window as any).Alpine = Alpine;
 
+const AirconPower = {
+  ON: "on",
+  OFF: "off",
+} as const;
+type AirconPower = (typeof AirconPower)[keyof typeof AirconPower];
+
+const AirconFan = {
+  AUTO: "auto",
+  F1: "f1",
+  F2: "f2",
+  F3: "f3",
+  F4: "f4",
+  F5: "f5",
+} as const;
+type AirconFan = (typeof AirconFan)[keyof typeof AirconFan];
+
+const AirconSwing = {
+  AUTO: "auto",
+  P1: "p1",
+  P2: "p2",
+  P3: "p3",
+  P4: "p4",
+  P5: "p5",
+} as const;
+type AirconSwing = (typeof AirconSwing)[keyof typeof AirconSwing];
+
+const AirconMode = {
+  COOL: "cool",
+  DRY: "dry",
+  HEAT: "heat",
+} as const;
+type AirconMode = (typeof AirconMode)[keyof typeof AirconMode];
+
 type AirconState = {
-  power: string;
-  mode: string;
+  power: AirconPower;
+  mode: AirconMode;
   temp: number;
-  fan: string;
-  direction: string;
+  fan: AirconFan;
+  swing: AirconSwing;
 };
 
 export type AirconStore = AirconState & {
@@ -17,58 +50,81 @@ export type AirconStore = AirconState & {
   enableCoolMode: () => void;
   enableDryMode: () => void;
   enableHeatMode: () => void;
+  toggleFan: () => boolean;
+  toggleSwing: () => boolean;
   decrementTemp: () => boolean;
   incrementTemp: () => boolean;
 };
 
 function createAirconStore(): AirconStore {
+  // prettier-ignore
+  const swingModes: AirconSwing[] = [AirconSwing.AUTO, AirconSwing.P1, AirconSwing.P2, AirconSwing.P3, AirconSwing.P4, AirconSwing.P5];
+  const nextSwingMode = (current: AirconSwing): AirconSwing => {
+    const idx = swingModes.indexOf(current);
+    return swingModes[(idx + 1) % swingModes.length];
+  };
+
+  // prettier-ignore
+  const fanModes: AirconFan[] = [AirconFan.AUTO, AirconFan.F1, AirconFan.F2, AirconFan.F3, AirconFan.F4, AirconFan.F5];
+  const nextFanMode = (current: AirconFan): AirconFan => {
+    const idx = fanModes.indexOf(current);
+    return fanModes[(idx + 1) % fanModes.length];
+  };
+
   return {
-    power: "off",
-    mode: "cool",
+    power: AirconPower.OFF,
+    mode: AirconMode.COOL,
     temp: 25,
-    fan: "auto",
-    direction: "auto",
+    fan: AirconFan.AUTO,
+    swing: AirconSwing.AUTO,
 
     update(newState) {
       this.power = newState.power;
       this.mode = newState.mode;
       this.temp = newState.temp;
       this.fan = newState.fan;
-      this.direction = newState.direction;
+      this.swing = newState.swing;
     },
 
     powerOff() {
-      this.power = "off";
+      this.power = AirconPower.OFF;
     },
 
     enableCoolMode() {
-      this.power = "on";
-      this.mode = "cool";
+      this.power = AirconPower.ON;
+      this.mode = AirconMode.COOL;
     },
     enableDryMode() {
-      this.power = "on";
-      this.mode = "dry";
+      this.power = AirconPower.ON;
+      this.mode = AirconMode.DRY;
     },
     enableHeatMode() {
-      this.power = "on";
-      this.mode = "heat";
+      this.power = AirconPower.ON;
+      this.mode = AirconMode.HEAT;
+    },
+
+    toggleFan() {
+      if (this.power === AirconPower.OFF) return false;
+      this.fan = nextFanMode(this.fan);
+      return true;
+    },
+    toggleSwing() {
+      if (this.power === AirconPower.OFF) return false;
+      this.swing = nextSwingMode(this.swing);
+      return true;
     },
 
     decrementTemp() {
-      if (this.power === "on" && this.temp > 16) {
-        this.temp -= 1;
-        return true;
-      } else {
-        return false;
-      }
+      if (this.power === AirconPower.OFF) return false;
+      if (this.temp <= 16) return false;
+      this.temp -= 1;
+      return true;
     },
     incrementTemp() {
-      if (this.power === "on" && this.temp < 30) {
-        this.temp += 1;
-        return true;
-      } else {
-        return false;
-      }
+      if (this.power === AirconPower.OFF) return false;
+      if (this.temp >= 30) return false;
+      this.temp += 1;
+      return true;
     },
   };
 }
@@ -95,6 +151,18 @@ Alpine.start();
 (window as any).handleEnableHeatMode = function () {
   Alpine.store("aircon").enableHeatMode();
   postAirconState();
+};
+
+(window as any).handleToggleFan = function () {
+  if (Alpine.store("aircon").toggleFan()) {
+    postAirconStateDebounced();
+  }
+};
+
+(window as any).handleToggleSwing = function () {
+  if (Alpine.store("aircon").toggleSwing()) {
+    postAirconStateDebounced();
+  }
 };
 
 (window as any).handleIncrementTemp = function () {

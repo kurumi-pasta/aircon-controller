@@ -23,20 +23,20 @@ class AirconMode(Enum):
 
 class AirconFan(Enum):
     AUTO = "auto"  # 自動
-    SILENT = "silent"  # 静
-    LEVEL1 = "1"
-    LEVEL2 = "2"
-    LEVEL3 = "3"
-    LEVEL4 = "4"
+    F1 = "f1"
+    F2 = "f2"
+    F3 = "f3"
+    F4 = "f4"
+    F5 = "f5"
 
 
-class AirconDirection(Enum):
+class AirconSwing(Enum):
     AUTO = "auto"  # 自動
-    LEVEL1 = "1"  # 一番上
-    LEVEL2 = "2"
-    LEVEL3 = "3"
-    LEVEL4 = "4"
-    LEVEL5 = "5"  # 一番下
+    P1 = "p1"  # 一番上
+    P2 = "p2"
+    P3 = "p3"
+    P4 = "p4"
+    P5 = "p5"  # 一番下
 
 
 @dataclass(frozen=True)
@@ -62,13 +62,13 @@ class AirconState:
         mode: AirconMode = AirconMode.COOL,
         temp: int = 25,
         fan: AirconFan = AirconFan.AUTO,
-        direction: AirconDirection = AirconDirection.AUTO,
+        swing: AirconSwing = AirconSwing.AUTO,
     ):
         self.power = power
         self.mode = mode
         self.temp = temp
         self.fan = fan
-        self.direction = direction
+        self.swing = swing
 
     def set_power(self, on: bool):
         self.power = on
@@ -82,13 +82,13 @@ class AirconState:
     def set_fan(self, fan: AirconFan):
         self.fan = fan
 
-    def set_direction(self, direction: AirconDirection):
-        self.direction = direction
+    def set_swing(self, swing: AirconSwing):
+        self.swing = swing
 
     def __repr__(self):
         return (
             f"<AirconState power={self.power} mode={self.mode.value} temp={self.temp} "
-            f"fan={self.fan.value} direction={self.direction.value}>"
+            f"fan={self.fan.value} swing={self.swing.value}>"
         )
 
 
@@ -126,8 +126,35 @@ def encode_aircon_state(state: AirconState) -> str:
 
     bytes.append((8, "00000001"))
 
-    # バイト9: 風量
-    bytes.append((9, "10000101"))
+    # バイト9: 風量、風向
+    b = 0b00000000
+    match state.swing:
+        case AirconSwing.AUTO:
+            b |= 0b1111
+        case AirconSwing.P1:
+            b |= 0b0001
+        case AirconSwing.P2:
+            b |= 0b0010
+        case AirconSwing.P3:
+            b |= 0b0011
+        case AirconSwing.P4:
+            b |= 0b0100
+        case AirconSwing.P5:
+            b |= 0b0101
+    match state.fan:
+        case AirconFan.AUTO:
+            b |= 0b1010 << 4
+        case AirconFan.F1:
+            b |= 0b0100 << 4
+        case AirconFan.F2:
+            b |= 0b0101 << 4
+        case AirconFan.F3:
+            b |= 0b0110 << 4
+        case AirconFan.F4:
+            b |= 0b0111 << 4
+        case AirconFan.F5:
+            b |= 0b1000 << 4
+    bytes.append((9, format(b, "08b")[::-1]))
 
     bytes += [
         (10, "00000000"),
@@ -305,7 +332,7 @@ def main():
         mode=AirconMode.COOL,
         temp=temp,
         fan=AirconFan.AUTO,
-        direction=AirconDirection.AUTO,
+        swing=AirconSwing.AUTO,
     )
 
     encoded_bits = encode_aircon_state(aircon_state)
